@@ -1,0 +1,126 @@
+version: "3.8"
+
+# =============================================================================
+# CardDemo Microservices - Docker Compose
+# Replaces the mainframe CICS/VSAM/JCL environment with containers
+# =============================================================================
+
+services:
+  # PostgreSQL - Replaces VSAM KSDS files
+  # Original: ACCTDAT, CARDDAT, CUSTDAT, USRSEC, TRANSACT, CARDXREF VSAM files
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: carddemo
+      POSTGRES_USER: carddemo
+      POSTGRES_PASSWORD: carddemo
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db-init/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./db-init/seed_data.sql:/docker-entrypoint-initdb.d/02-seed.sql
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U carddemo"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Auth Service - Replaces COSGN00C.cbl (CC00 transaction)
+  auth-service:
+    build: ./auth-service
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: carddemo
+      DB_USER: carddemo
+      DB_PASSWORD: carddemo
+      JWT_SECRET_KEY: carddemo-secret-key-change-in-production
+    ports:
+      - "8001:8001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Account Service - Replaces COACTVWC.cbl (CAVW) and COACTUPC.cbl (CAUP)
+  account-service:
+    build: ./account-service
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: carddemo
+      DB_USER: carddemo
+      DB_PASSWORD: carddemo
+    ports:
+      - "8002:8002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Card Service - Replaces COCRDLIC/COCRDSLC/COCRDUPC (CCLI/CCDL/CCUP)
+  card-service:
+    build: ./card-service
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: carddemo
+      DB_USER: carddemo
+      DB_PASSWORD: carddemo
+    ports:
+      - "8003:8003"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Transaction Service - Replaces COTRN00C/01C/02C (CT00/CT01/CT02) + batch
+  transaction-service:
+    build: ./transaction-service
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: carddemo
+      DB_USER: carddemo
+      DB_PASSWORD: carddemo
+    ports:
+      - "8004:8004"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # User Admin Service - Replaces COUSR00C-03C (CU00-CU03)
+  user-admin-service:
+    build: ./user-admin-service
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: carddemo
+      DB_USER: carddemo
+      DB_PASSWORD: carddemo
+    ports:
+      - "8005:8005"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # API Gateway - Replaces CICS Transaction Routing
+  api-gateway:
+    build: ./api-gateway
+    environment:
+      AUTH_SERVICE_URL: http://auth-service:8001
+      ACCOUNT_SERVICE_URL: http://account-service:8002
+      CARD_SERVICE_URL: http://card-service:8003
+      TRANSACTION_SERVICE_URL: http://transaction-service:8004
+      USER_ADMIN_SERVICE_URL: http://user-admin-service:8005
+    ports:
+      - "8000:8000"
+    depends_on:
+      - auth-service
+      - account-service
+      - card-service
+      - transaction-service
+      - user-admin-service
+    volumes:
+      - ./frontend:/app/../frontend:ro
+
+volumes:
+  pgdata:

@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CardDemo - Migrated from Mainframe</title>
+    <style>
+        :root {
+            --primary: #1a56db;
+            --primary-dark: #1e40af;
+            --success: #059669;
+            --danger: #dc2626;
+            --warning: #d97706;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+        .header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #1a56db 100%);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header h1 { font-size: 1.5rem; }
+        .header .subtitle { font-size: 0.85rem; opacity: 0.8; }
+        .user-info { display: flex; align-items: center; gap: 1rem; }
+        .user-info span { font-size: 0.9rem; }
+        .badge {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-admin { background: #fbbf24; color: #92400e; }
+        .badge-user { background: #34d399; color: #065f46; }
+        #login-section, #app-section { display: none; }
+        .login-container {
+            max-width: 420px;
+            margin: 80px auto;
+            background: var(--card-bg);
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        .login-container h2 {
+            text-align: center;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+        .login-container .cobol-ref {
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-bottom: 1.5rem;
+        }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 0.3rem; font-size: 0.9rem; }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-sm { padding: 0.3rem 0.7rem; font-size: 0.8rem; }
+        .btn-full { width: 100%; }
+        .nav-tabs {
+            display: flex;
+            background: white;
+            border-bottom: 2px solid var(--border);
+            padding: 0 1rem;
+        }
+        .nav-tab {
+            padding: 0.8rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            color: var(--text-light);
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .nav-tab:hover { color: var(--primary); }
+        .nav-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        .nav-tab .cobol-tag {
+            font-size: 0.7rem;
+            color: var(--text-light);
+            display: block;
+        }
+        .content { padding: 1.5rem 2rem; max-width: 1400px; margin: 0 auto; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        th, td { padding: 0.7rem 1rem; text-align: left; border-bottom: 1px solid var(--border); }
+        th { background: #f1f5f9; font-weight: 600; font-size: 0.85rem; color: var(--text-light); text-transform: uppercase; }
+        td { font-size: 0.9rem; }
+        tr:hover { background: #f8fafc; }
+        .card-panel {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .card-panel h3 { margin-bottom: 1rem; color: var(--primary); }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat-card {
+            background: white;
+            padding: 1.2rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            text-align: center;
+        }
+        .stat-card .value { font-size: 1.8rem; font-weight: 700; color: var(--primary); }
+        .stat-card .label { font-size: 0.8rem; color: var(--text-light); }
+        .pagination { display: flex; gap: 0.5rem; margin-top: 1rem; justify-content: center; }
+        .alert { padding: 0.8rem 1rem; border-radius: 6px; margin-bottom: 1rem; }
+        .alert-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .alert-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        .migration-tag {
+            display: inline-block;
+            background: #ede9fe;
+            color: #5b21b6;
+            padding: 0.1rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            font-family: monospace;
+        }
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem 2rem;
+        }
+        .detail-row { display: flex; justify-content: space-between; padding: 0.3rem 0; }
+        .detail-label { font-weight: 600; color: var(--text-light); font-size: 0.85rem; }
+        .detail-value { font-size: 0.9rem; }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal h3 { margin-bottom: 1rem; }
+        .actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
+        #msg { position: fixed; top: 70px; right: 20px; z-index: 999; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>CardDemo</h1>
+            <div class="subtitle">Credit Card Management System - Migrated from Mainframe COBOL/CICS to Microservices</div>
+        </div>
+        <div class="user-info" id="header-user" style="display:none">
+            <span id="header-username"></span>
+            <span id="header-badge"></span>
+            <button class="btn btn-sm btn-danger" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <div id="msg"></div>
+
+    <!-- Login Section (replaces COSGN00C - CC00 transaction) -->
+    <div id="login-section">
+        <div class="login-container">
+            <h2>Sign On</h2>
+            <div class="cobol-ref">
+                <span class="migration-tag">COSGN00C.cbl</span> Transaction CC00 &rarr; POST /api/auth/login
+            </div>
+            <div id="login-error"></div>
+            <div class="form-group">
+                <label>User ID</label>
+                <input type="text" id="login-userid" placeholder="e.g. ADMIN001" value="ADMIN001">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="login-password" placeholder="Password" value="PASSWORD">
+            </div>
+            <button class="btn btn-primary btn-full" onclick="login()">Sign On</button>
+            <div style="margin-top:1rem;font-size:0.8rem;color:var(--text-light);text-align:center">
+                Admin: ADMIN001 / PASSWORD &nbsp;|&nbsp; User: USER0001 / PASSWORD
+            </div>
+        </div>
+    </div>
+
+    <!-- App Section -->
+    <div id="app-section">
+        <div class="nav-tabs">
+            <div class="nav-tab active" onclick="switchTab('accounts')">
+                Accounts
+                <span class="cobol-tag">CAVW/CAUP</span>
+            </div>
+            <div class="nav-tab" onclick="switchTab('cards')">
+                Cards
+                <span class="cobol-tag">CCLI/CCDL/CCUP</span>
+            </div>
+            <div class="nav-tab" onclick="switchTab('transactions')">
+                Transactions
+                <span class="cobol-tag">CT00/CT01/CT02</span>
+            </div>
+            <div class="nav-tab" onclick="switchTab('reports')">
+                Reports
+                <span class="cobol-tag">CR00</span>
+            </div>
+            <div class="nav-tab" onclick="switchTab('users')" id="users-tab" style="display:none">
+                Users (Admin)
+                <span class="cobol-tag">CU00-CU03</span>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- Accounts Tab -->
+            <div class="tab-content active" id="tab-accounts">
+                <div class="card-panel">
+                    <h3>Accounts <span class="migration-tag">COACTVWC.cbl &rarr; GET /api/accounts</span></h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Account ID</th>
+                                <th>Status</th>
+                                <th>Balance</th>
+                                <th>Credit Limit</th>
+                                <th>Open Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="accounts-tbody"></tbody>
+                    </table>
+                    <div class="pagination" id="accounts-pagination"></div>
+                </div>
+            </div>
+
+            <!-- Cards Tab -->
+            <div class="tab-content" id="tab-cards">
+                <div class="card-panel">
+                    <h3>Credit Cards <span class="migration-tag">COCRDLIC.cbl &rarr; GET /api/cards</span></h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Card Number</th>
+                                <th>Account ID</th>
+                                <th>Embossed Name</th>
+                                <th>Expiration</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cards-tbody"></tbody>
+                    </table>
+                    <div class="pagination" id="cards-pagination"></div>
+                </div>
+            </div>
+
+            <!-- Transactions Tab -->
+            <div class="tab-content" id="tab-transactions">
+                <div class="card-panel">
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                        <h3>Transactions <span class="migration-tag">COTRN00C.cbl &rarr; GET /api/transactions</span></h3>
+                        <button class="btn btn-primary btn-sm" onclick="showAddTransaction()">+ Add Transaction</button>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tran ID</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                                <th>Amount</th>
+                                <th>Card</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactions-tbody"></tbody>
+                    </table>
+                    <div class="pagination" id="transactions-pagination"></div>
+                </div>
+            </div>
+
+            <!-- Reports Tab -->
+            <div class="tab-content" id="tab-reports">
+                <div class="card-panel">
+                    <h3>Transaction Reports <span class="migration-tag">CORPT00C.cbl &rarr; GET /api/transactions/report</span></h3>
+                    <div style="display:flex;gap:1rem;margin-bottom:1rem;flex-wrap:wrap">
+                        <div class="form-group">
+                            <label>Start Date</label>
+                            <input type="date" id="report-start">
+                        </div>
+                        <div class="form-group">
+                            <label>End Date</label>
+                            <input type="date" id="report-end">
+                        </div>
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-primary" onclick="loadReport()">Generate Report</button>
+                        </div>
+                    </div>
+                    <div id="report-results"></div>
+                </div>
+            </div>
+
+            <!-- Users Tab (Admin only) -->
+            <div class="tab-content" id="tab-users">
+                <div class="card-panel">
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                        <h3>User Management <span class="migration-tag">COUSR00C.cbl &rarr; GET /api/users</span></h3>
+                        <button class="btn btn-primary btn-sm" onclick="showAddUser()">+ Add User</button>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>User ID</th>
+                                <th>First Name</th>
+                                <th>Last Name</th>
+                                <th>Type</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for details/forms -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal" id="modal-content"></div>
+    </div>
+
+    <script>
+    const API = '';
+    let token = null;
+    let currentUser = null;
+
+    function showMsg(text, type='success') {
+        const el = document.getElementById('msg');
+        el.innerHTML = `<div class="alert alert-${type}">${text}</div>`;
+        setTimeout(() => el.innerHTML = '', 3000);
+    }
+
+    async function apiFetch(path, opts = {}) {
+        const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        const resp = await fetch(API + path, { ...opts, headers });
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({ detail: 'Request failed' }));
+            throw new Error(err.detail || 'Request failed');
+        }
+        return resp.json();
+    }
+
+    // --- Auth (COSGN00C) ---
+    async function login() {
+        const userId = document.getElementById('login-userid').value;
+        const password = document.getElementById('login-password').value;
+        try {
+            const data = await apiFetch('/api/auth/login', {
+                method: 'POST',
+                body: JSON.stringify({ user_id: userId, password: password })
+            });
+            token = data.token;
+            currentUser = data;
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('app-section').style.display = 'block';
+            document.getElementById('header-user').style.display = 'flex';
+            document.getElementById('header-username').textContent = `${data.first_name} ${data.last_name}`;
+            document.getElementById('header-badge').innerHTML =
+                data.user_type === 'A'
+                    ? '<span class="badge badge-admin">ADMIN</span>'
+                    : '<span class="badge badge-user">USER</span>';
+            if (data.user_type === 'A') {
+                document.getElementById('users-tab').style.display = 'block';
+            }
+            loadAccounts();
+            showMsg('Login successful');
+        } catch (e) {
+            document.getElementById('login-error').innerHTML =
+                `<div class="alert alert-error">${e.message}</div>`;
+        }
+    }
+
+    function logout() {
+        token = null;
+        currentUser = null;
+        document.getElementById('login-section').style.display = 'block';
+        document.getElementById('app-section').style.display = 'none';
+        document.getElementById('header-user').style.display = 'none';
+        document.getElementById('users-tab').style.display = 'none';
+    }
+
+    // --- Navigation ---
+    function switchTab(name) {
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+        document.getElementById('tab-' + name).classList.add('active');
+        if (name === 'accounts') loadAccounts();
+        else if (name === 'cards') loadCards();
+        else if (name === 'transactions') loadTransactions();
+        else if (name === 'users') loadUsers();
+    }
+
+    // --- Accounts (COACTVWC) ---
+    async function loadAccounts(page = 1) {
+        try {
+            const data = await apiFetch(`/api/accounts?page=${page}&page_size=10`);
+            const tbody = document.getElementById('accounts-tbody');
+            tbody.innerHTML = data.accounts.map(a => `
+                <tr>
+                    <td>${a.acct_id}</td>
+                    <td>${a.active_status === 'Y' ? '<span style="color:green">Active</span>' : 'Inactive'}</td>
+                    <td>$${Number(a.curr_bal).toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+                    <td>$${Number(a.credit_limit).toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+                    <td>${a.open_date || '-'}</td>
+                    <td><button class="btn btn-primary btn-sm" onclick="viewAccount(${a.acct_id})">View</button></td>
+                </tr>
+            `).join('');
+            renderPagination('accounts', data, loadAccounts);
+        } catch (e) { showMsg(e.message, 'error'); }
+    }
+
+    async function viewAccount(id) {
+        try {
+            const data = await apiFetch(`/api/accounts/${id}`);
+            const a = data.account;
+            const c = data.customer;
+            const cards = data.cards;
+            document.getElementById('modal-content').innerHTML = `
+                <h3>Account #${a.acct_id} <span class="migration-tag">COACTVWC.cbl</span></h3>
+                <div class="detail-grid">
+                    <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value">${a.active_status === 'Y' ? 'Active' : 'Inactive'}</span></div>
+                    <div class="detail-row"><span class="detail-label">Balance</span><span class="detail-value">$${Number(a.curr_bal).toFixed(2)}</span></div>
+                    <div class="detail-row"><span class="detail-label">Credit Limit</span><span class="detail-value">$${Number(a.credit_limit).toFixed(2)}</span></div>
+                    <div class="detail-row"><span class="detail-label">Cash Credit Limit</span><span class="detail-value">$${Number(a.cash_credit_limit).toFixed(2)}</span></div>
+                    <div class="detail-row"><span class="detail-label">Open Date</span><span class="detail-value">${a.open_date || '-'}</span></div>
+                    <div class="detail-row"><span class="detail-label">Expiration</span><span class="detail-value">${a.expiration_date || '-'}</span></div>
+                </div>
+                ${c ? `<h4 style="margin-top:1rem">Customer</h4>
+                <div class="detail-grid">
+                    <div class="detail-row"><span class="detail-label">Name</span><span class="detail-value">${c.first_name} ${c.middle_name || ''} ${c.last_name}</span></div>
+                    <div class="detail-row"><span class="detail-label">Address</span><span class="detail-value">${c.addr_line_1}, ${c.addr_state_cd}</span></div>
+                    <div class="detail-row"><span class="detail-label">Phone</span><span class="detail-value">${c.phone_num_1}</span></div>
+                    <div class="detail-row"><span class="detail-label">FICO</span><span class="detail-value">${c.fico_credit_score}</span></div>
+                </div>` : ''}
+                ${cards.length ? `<h4 style="margin-top:1rem">Cards (${cards.length})</h4>
+                <table><thead><tr><th>Card Number</th><th>Name</th><th>Status</th></tr></thead>
+                <tbody>${cards.map(cd => `<tr><td>${cd.card_num}</td><td>${cd.embossed_name}</td><td>${cd.active_status === 'Y' ? 'Active' : 'Inactive'}</td></tr>`).join('')}</tbody></table>` : ''}
+                <div class="actions"><button class="btn btn-primary" onclick="closeModal()">Close</button></div>
+            `;
+            document.getElementById('modal-overlay').classList.add('active');
+        } catch (e) { showMsg(e.message, 'error'); }
+    }
+
+    // --- Cards (COCRDLIC) ---
+    async function loadCards(page = 1) {
+        try {
+            const data = await apiFetch(`/api/cards?page=${page}&page_size=10`);
+            const tbody = document.getElementById('cards-tbody');
+            tbody.innerHTML = data.cards.map(c => `
+                <tr>
+                    <td style="font-family:monospace">${c.card_num}</td>
+                    <td>${c.acct_id}</td>
+                    <td>${c.embossed_name}</td>
+                    <td>${c.expiration_date || '-'}</td>
+                    <td>${c.active_status === 'Y' ? '<span style="color:green">Active</span>' : 'Inactive'}</td>
+                    <td><button class="btn btn-primary btn-sm" onclick="viewCard('${c.card_num}')">View</button></td>
+                </tr>
+            `).join('');
+            renderPagination('cards', data, loadCards);
+        } catch (e) { showMsg(e.message, 'error'); }
+    }
+
+    async function viewCard(num) {
+        try {
+            const data = await apiFetch(`/api/cards/${num}`);
+            const c = data.card;
+            document.getElementById('modal-content').innerHTML = `
+                <h3>Card Detail <span class="migration-tag">COCRDSLC.cbl</span></h3>
+                <div class="detail-grid">
+                    <div class="detail-row"><span class="detail-label">Card Number</span><span class="detail-value" style="font-family:monospace">${c.card_num}</span></div>
+                    <div class="detail-row"><span class="detail-label">Account ID</span><span class="detail-value">${c.acct_id}</span></div>
+                    <div class="detail-row"><span class="detail-label">Embossed Name</span><span class="detail-value">${c.embossed_name}</span></div>
+                    <div class="detail-row"><span class="detail-label">CVV</span><span class="detail-value">${c.cvv_cd}</span></div>
+                    <div class="detail-row"><span class="detail-label">Expiration</span><span class="detail-value">${c.expiration_date || '-'}</span></div>
+                    <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value">${c.active_status === 'Y' ? 'Active' : 'Inactive'}</span></div>
+                </div>
+                <div class="actions"><button class="btn btn-primary" onclick="closeModal()">Close</button></div>
+            `;
+            document.getElementById('modal-overlay').classList.add('active');
+        } catch (e) { showMsg(e.message, 'error'); }
+    }
+
+    // --- Transactions (COTRN00C) ---
+    async function loadTransactions(page = 1) {
+        try {
+            const data = await apiFetch(`/api/transactions?page=${page}&page_size=10`);
+            const tbody = document.getElementById('transactions-tbody');
+            tbody.innerHTML = data.transactions.map(t => `
+                <tr>
+                    <td style="font-family:monospace;font-size:0.8rem">${t.tran_id}</td>
+                    <td>${t.tran_type_desc || t.tran_type_cd}</td>
+                    <td>${t.tran_desc || '-'}</td>
+                    <td style="color:${Number(t.tran_amt) < 0 ? 'green' : 'inherit'}">$${Number(t.tran_amt).toFixed(2)}</td>
+                    <td style="font-family:monospace;font-size:0.8rem">${t.card_num || '-'}</td>
+                    <td>${t.orig_ts ? new Date(t.orig_ts).toLocaleDateString() : '-'}</td>
+                    <td><button class="btn btn-primary btn-sm" onclick="viewTransaction('${t.tran_id}')">View</button></td>
+                </tr>
+            `).join('');
+            renderPagination('transactions', data, loadTransactions);
+        } catch (e) { showMsg(e.message, 'error'); }
+    }
+
+    async function viewTransaction(id) {
+        try {
+            const data = await apiFetch(`/api/transactions/${id}`);
+            const t = data.transaction;
+            document.getElementById('modal-content').innerHTML = `
+                <h3>Transaction Detail <span class="migration-tag">COTRN01C.cbl</span></h3>
+                <div class="detail-grid">
+                    <div class="detail-row"><span class="detail-label">Transaction ID</span><span class="detail-value" style="font-family:monospace">${t.tran_id}</span></div>
+                    <div class="detail-row"><span class="detail-label">Type</span><span class="detail-value">${t.tran_type_desc || t.tran_type_cd}</span></div>
+                    <div class="detail-row"><span class="detail-label">Amount</span><span class="detail-value">$${Number(t.tran_amt).toFixed(2)}</span></div>
+                    <div class="detail-row"><span class="detail-label">Description</span><span class="detail-value">${t.tran_desc}</span></div>
+                    <div class="detail-row"><span class="detail-label">Card</span><span class="detail-value" style="font-family:monospace">${t.card_num}</span></div>
+                    <div class="detail-row"><span class="detail-label">Merchant</span><span class="detail-value">${t.merchant_name}</span></div>
+                    <div class="detail-row"><span class="detail-label">City</span><span class="detail-value">${t.merchant_city}</span></div>
+                    <div class="detail-row"><span class="detail-label">Date</span><span class="detail-value">${t.orig_ts}</span></div>
+                    <div class="detail-row"><span class="detail-label">Processed</span><span class="detail-value">${t.proc_ts || 'Pending'}</span></div>
+                </div>
+                <div class="actions"><button class="btn btn-primary" onclick="closeModal()">Close</button></div>
+            `;
+            document.getElementById('modal-overlay').classList.add('active');
+        } catch (e) { showMsg(e.message, 'error'); }
+    }
+
+    function showAddTransaction() {
+        document.getElementById('modal-content').innerHTML = `
+            <h3>Add Transaction <span class="migration-tag">COTRN02C.cbl</span></h3>
+            <div class="form-group"><label>Card Number</label><input type="text" id="new-tran-card"></div>
+            <div class="form-group"><label>Type</label>
+                <select id="new-tran-type">
+                    <option value="01">Purchase</option>
+                    <option value="02">Payment</option>
+                    <option value="03">Credit</option>
+                    <option value="04">Cash Advance</option>
+                </select>
+            </div>
+            <div class="form-group"><label>Amount</label><input type="number" id="new-tran-amt" step="0.01"></div>
+            <div class="form-group"><label>Description</label><input type="text" id="new-tran-desc"></div>
+            <div class="form-group"><label>Merchant Name</label><input type="text" id="new-tran-merchant"></div>
+            <div class="actions">
+                <button class="btn btn-primary" onclick="addTransaction()">Add</button>
+                <button class="btn btn-danger" onclick="closeModal()">Cancel</button>
+            </div>
+        `;
+        document.getElementById('modal-overlay').classList.add('active');
+    }
+
+    async function addTransaction() {
+        try {
+            await apiFetch('/api/transactions', {
+                method: 'POST',
+                body: JSON.stringify({
+                    card_num: document.getElementById('new-tran-card').value,
+                    tran_type_cd: document.getElementById('new-tran-type').value,
+                    tran_amt: parseFloat(document.getElementById('new-tran-amt').value),
+                    tran_desc: document.getElementById('new-tran-desc').value,
+                    merchant_name: document.getElementById('new-tran-merchant').value,
+                    tran_source: 'ONLINE'
+                })
+            });
+            closeModal();
+            showMsg('Transaction added');
+            loadTransactions();
+        } catch (e) { showMsg(e.message, 'error'); }
+    }
+
+    // --- Reports (CORPT00C) ---
+    async function loadReport() {
+        try {
+            let params = [];
+            const start = document.getElementById('report-start').value;
+            const end = document.getElementById('report-end').value;
+            if (start) params.push(`start_date=${start}`);
+            if (end) params.push(`end_date=${end}`);
+            const qs = params.length ? '?' + params.join('&') : '';
+            const data = await apiFetch(`/api/transactions/report${qs}`);
+            const r = data.report;
+            document.getElementById('report-results').innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="value">${r.totals.total_count}</div>
+                        <div class="label">Total Transactions</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value">$${Number(r.totals.total_amount).toLocaleString('en-US', {minimumFractionDigits:2})}</div>
+                        <div class="label">Total Amount</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value">$${Number(r.totals.avg_amount).toFixed(2)}</div>
+                        <div class="label">Average Amount</div>
+                    </div>
+                </div>
+                <h4>By Transaction Type</h4>
+                <table>
+                    <thead><tr><th>Type</th><th>Description</th><th>Count</th><th>Total</th><th>Average</th></tr></thead>
+                    <tbody>${r.summary_by_type.map(s => `
+                        <tr>
+                            <td>${s.tran_type_cd}</td>
+                            <td>${s.tran_type_desc || '-'}</td>
+                            <td>${s.count}</td>
+                            <td>$${Number(s.total_amount).toFixed(2)}</td>
+                            <td>$${Number(s.avg_amount).toFixed(2)}</td>
+                        </tr>
+                    `).join('')}</tbody>
+                </table>
+                <div style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-light)">Generated: ${r.generated_at}</div>
+            `;
+        } catch (e) { showMsg(e.message, 'error'); }
+    }
+
+    // --- Users Admin (COUSR00C) ---
+    async function loadUsers() {
+        try {
+            const data = await apiFetch('/api/users');
+            const tbody = document.getElementById('users-tbody');
+            tbody.innerHTML = data.users.map(u => `
+                <tr>
+                    <td>${u.user_id}</td>
+                    <td>${u.first_name}</td>
+                    <td>${u.last_name}</td>
+                    <td>${u.user_type === 'A' ? '<span class="badge badge-admin">Admin</span>' : '<span class="badge badge-user">User</span>'}</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm" onclick="showEditUser('${u.user_id}','${u.first_name}','${u.last_name}','${u.user_type}')">Edit</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.user_id}')">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (e) { showMsg(e.message, 'error'); }
+    }
+
+    function showAddUser() {
+        document.getElementById('modal-content').innerHTML = `
+            <h3>Add User <span class="migration-tag">COUSR01C.cbl</span></h3>
+            <div class="form-group"><label>User ID</label><input type="text" id="new-user-id" maxlength="8"></div>
+            <div class="form-group"><label>First Name</label><input type="text" id="new-user-fname"></div>
+            <div class="form-group"><label>Last Name</label><input type="text" id="new-user-lname"></div>
+            <div class="form-group"><label>Password</label><input type="password" id="new-user-pwd"></div>
+            <div class="form-group"><label>Type</label>
+                <select id="new-user-type"><option value="U">User</option><option value="A">Admin</option></select>
+            </div>
+            <div class="actions">
+                <button class="btn btn-primary" onclick="addUser()">Add</button>
+                <button class="btn btn-danger" onclick="closeModal()">Cancel</button>
+            </div>
+        `;
+        document.getElementById('modal-overlay').classList.add('active');
+    }
+
+    async function addUser() {
+        try {
+            await apiFetch('/api/users', {
+                method: 'POST',
+                body: JSON.stringify({
+                    user_id: document.getElementById('new-user-id').value,
+                    first_name: document.getElementById('new-user-fname').value,
+                    last_name: document.getElementById('new-user-lname').value,
+                    password: document.getElementById('new-user-pwd').value,
+                    user_type: document.getElementById('new-user-type').value,
+                })
+            });
+            closeModal();
+            showMsg('User added');
+            loadUsers();
+        } catch (e) { showMsg(e.message, 'error'); }
+    }
+
+    function showEditUser(id, fname, lname, type) {
+        document.getElementById('modal-content').innerHTML = `
+            <h3>Edit User <span class="migration-tag">COUSR02C.cbl</span></h3>
+            <div class="form-group"><label>User ID</label><input type="text" value="${id}" disabled></div>
+            <div class="form-group"><label>First Name</label><input type="text" id="edit-user-fname" value="${fname}"></div>
+            <div class="form-group"><label>Last Name</label><input type="text" id="edit-user-lname" value="${lname}"></div>
+            <div class="form-group"><label>Type</label>
+                <select id="edit-user-type"><option value="U" ${type==='U'?'selected':''}>User</option><option value="A" ${type==='A'?'selected':''}>Admin</option></select>
+            </div>
+            <div class="actions">
+                <button class="btn btn-primary" onclick="updateUser('${id}')">Update</button>
+                <button class="btn btn-danger" onclick="closeModal()">Cancel</button>
+            </div>
+        `;
+        document.getElementById('modal-overlay').classList.add('active');
+    }
+
+    async function updateUser(id) {
+        try {
+            await apiFetch(`/api/users/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    first_name: document.getElementById('edit-user-fname').value,
+                    last_name: document.getElementById('edit-user-lname').value,
+                    user_type: document.getElementById('edit-user-type').value,
+                })
+            });
+            closeModal();
+            showMsg('User updated');
+            loadUsers();
+        } catch (e) { showMsg(e.message, 'error'); }
+    }
+
+    async function deleteUser(id) {
+        if (!confirm(`Delete user ${id}?`)) return;
+        try {
+            await apiFetch(`/api/users/${id}`, { method: 'DELETE' });
+            showMsg('User deleted');
+            loadUsers();
+        } catch (e) { showMsg(e.message, 'error'); }
+    }
+
+    // --- Helpers ---
+    function renderPagination(name, data, loadFn) {
+        const el = document.getElementById(name + '-pagination');
+        if (data.total_pages <= 1) { el.innerHTML = ''; return; }
+        let html = '';
+        for (let i = 1; i <= data.total_pages; i++) {
+            html += `<button class="btn btn-sm ${i===data.page?'btn-primary':''}" onclick="${loadFn.name}(${i})">${i}</button>`;
+        }
+        el.innerHTML = html;
+    }
+
+    function closeModal() {
+        document.getElementById('modal-overlay').classList.remove('active');
+    }
+
+    document.getElementById('modal-overlay').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+
+    // Show login on load
+    document.getElementById('login-section').style.display = 'block';
+    </script>
+</body>
+</html>
