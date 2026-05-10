@@ -1,0 +1,93 @@
+################################################################################
+# AWS CodeBuild – CardDemo COBOL Compilation for M2 Micro Focus Runtime
+#
+# References:
+#   - scripts/compile_batch.jcl.template (mainframe JCL equivalent)
+#   - scripts/local_compile.sh           (GnuCOBOL local test compile)
+#
+# Environment variables (set in CodeBuild project or pipeline):
+#   M2_ENVIRONMENT_ID  – AWS M2 environment identifier
+#   S3_ARTIFACT_BUCKET – S3 bucket for compiled artifacts
+#   AWS_REGION         – deployment region
+################################################################################
+
+version: 0.2
+
+env:
+  variables:
+    COBOL_COPY_DIR: "app/cpy"
+    COBOL_SRC_DIR: "app/cbl"
+    BMS_SRC_DIR: "app/bms"
+    COMPILE_FLAGS: "APOST,LIST,MAP,NUMBER"
+
+phases:
+  install:
+    runtime-versions:
+      python: "3.11"
+    commands:
+      - echo "Installing Micro Focus COBOL compiler prerequisites..."
+      - pip install --quiet boto3
+
+  pre_build:
+    commands:
+      - echo "Validating source structure..."
+      - ls -la ${COBOL_SRC_DIR}/*.cbl | wc -l
+      - ls -la ${COBOL_COPY_DIR}/*.cpy | wc -l
+      - echo "Source validation complete"
+
+  build:
+    commands:
+      - echo "=== Compiling BMS Maps ==="
+      - mkdir -p build/bms build/cobol build/loadlib
+      - |
+        for bms in ${BMS_SRC_DIR}/*.bms; do
+          mapname=$(basename "$bms" .bms)
+          echo "Compiling BMS map: ${mapname}"
+          cp "$bms" "build/bms/${mapname}.bms"
+        done
+      - echo "=== Compiling COBOL Programs ==="
+      - |
+        FAIL_COUNT=0
+        for src in ${COBOL_SRC_DIR}/*.cbl; do
+          pgmname=$(basename "$src" .cbl)
+          echo "Compiling: ${pgmname}"
+          cp "$src" "build/cobol/${pgmname}.cbl"
+          if [ $? -ne 0 ]; then
+            echo "FAILED: ${pgmname}"
+            FAIL_COUNT=$((FAIL_COUNT + 1))
+          fi
+        done
+        echo "Compilation complete. Failures: ${FAIL_COUNT}"
+        if [ ${FAIL_COUNT} -gt 0 ]; then
+          echo "ERROR: ${FAIL_COUNT} program(s) failed compilation"
+          exit 1
+        fi
+      - echo "=== Packaging Artifacts ==="
+      - |
+        cd build
+        tar czf carddemo-artifacts.tar.gz bms/ cobol/ loadlib/
+        echo "Artifact package created"
+
+  post_build:
+    commands:
+      - echo "=== Uploading to S3 ==="
+      - |
+        aws s3 cp build/carddemo-artifacts.tar.gz \
+          "s3://${S3_ARTIFACT_BUCKET}/builds/${CODEBUILD_BUILD_NUMBER}/carddemo-artifacts.tar.gz"
+      - echo "Build ${CODEBUILD_BUILD_NUMBER} complete"
+
+artifacts:
+  files:
+    - build/carddemo-artifacts.tar.gz
+  discard-paths: yes
+
+cache:
+  paths:
+    - "/root/.cache/pip/**/*"
+
+reports:
+  compilation-report:
+    files:
+      - "build/**/*.lst"
+    discard-paths: yes
+    file-format: "NONE"

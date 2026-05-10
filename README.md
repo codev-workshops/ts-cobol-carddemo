@@ -394,5 +394,60 @@ The CardDemo application has been enhanced with optional features that extend it
 
 These optional features make CardDemo an even more useful resource for customers looking to modernize their mainframe applications. With modules for DB2, MQ, IMS DB, JCL utilities, and more data formats now available, customers can leverage CardDemo to test a wider array of mainframe migration, refactoring, replatforming, and augmentation scenarios.
 
-Last updated: April 2025
+Last updated: May 2025
+
+---
+
+## Phase 0 – AWS M2 Migration Artifacts
+
+The `infra/` and `docs/` directories contain the Phase 0 migration scaffolding for deploying CardDemo on AWS Mainframe Modernization (Micro Focus runtime) with Aurora PostgreSQL.
+
+### Directory Layout
+
+```
+infra/
+  main.tf              – VPC, M2 environment, Aurora PostgreSQL, S3, IAM, CloudWatch
+  variables.tf         – Configurable inputs (region, instance sizes, etc.)
+  outputs.tf           – Key resource identifiers and endpoints
+  db/
+    schema.sql         – Aurora PostgreSQL DDL derived from COBOL copybooks
+  etl/
+    etl_common.py      – Shared parsing utilities (zoned-decimal, overpunch)
+    load_acctdata.py   – ACCTDATA → acctdat
+    load_carddata.py   – CARDDATA → carddat
+    load_cardxref.py   – CARDXREF → cardxref
+    load_custdata.py   – CUSTDATA → custdat
+    load_discgrp.py    – DISCGRP  → discgrp
+    load_tcatbal.py    – TCATBAL  → tcatbalf
+    load_trancatg.py   – TRANCATG → trancatg
+    load_trantype.py   – TRANTYPE → trantype
+    load_all.py        – Orchestrator
+    validate.py        – Row-count and checksum validation
+    requirements.txt   – Python dependencies
+  cicd/
+    buildspec.yml      – CodeBuild spec for COBOL/BMS compilation
+    pipeline.tf        – CodePipeline definition (Source → Build → Deploy)
+docs/
+  dependency-map.md    – Program call graph, file access map, CSD/VSAM inventory
+  baseline-tests.md    – Golden reference test specifications for online and batch
+```
+
+### Quick Start (Infrastructure)
+
+```bash
+cd infra
+terraform init
+terraform plan -var="environment=dev"
+terraform apply -var="environment=dev"
+```
+
+### Quick Start (ETL)
+
+```bash
+cd infra/etl
+pip install -r requirements.txt
+export PGHOST=<aurora-endpoint> PGDATABASE=carddemo PGUSER=carddemo_admin PGPASSWORD=<password>
+psql -h $PGHOST -U $PGUSER -d $PGDATABASE -f ../db/schema.sql
+python load_all.py --validate
+```
 
