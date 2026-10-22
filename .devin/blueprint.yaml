@@ -1,0 +1,36 @@
+# https://docs.devin.ai/onboard-devin/environment-yaml
+# One-time setup (e.g., install system tools, global CLIs).
+initialize: |
+  sudo apt-get update && sudo apt-get install -y gnucobol
+# Install project dependencies (runs during builds, surfaced to agent at session start).
+maintenance: |
+  pip install jsonschema ruff
+knowledge:
+  - name: interest report extract
+    contents: |
+      ./scripts/run_interest_report.sh   # writes app/data/reports/interest-summary.csv
+      python3 scripts/generate_interest_dashboard.py   # writes docs/reports/interest-dashboard.html
+  - name: test
+    contents: |
+      python3 -m unittest discover -s tests
+  - name: lint
+    contents: |
+      ruff check scripts/generate_interest_dashboard.py tests/
+  - name: build
+    contents: |
+      cobc -I app/cpy -fsign=EBCDIC -x app/cbl/<PROGRAM>.cbl
+      # committed copybooks are tab-indented; copy them to a scratch dir and
+      # re-indent to column 12 before compiling (see scripts/run_statement_json.sh)
+  - name: statement json extract
+    contents: |
+      ./scripts/run_statement_json.sh   # writes app/data/json/statements.json
+  - name: spring boot build
+    contents: |
+      (cd spring-boot && mvn -q clean verify)   # needs JAVA_HOME on a Java 21 JDK
+  - name: spring boot startup
+    contents: |
+      (cd spring-boot && mvn -q spring-boot:run)   # H2 in-memory, seeds from app/data on startup
+  - name: notes
+    contents: |
+      ASCII data in app/data/ASCII uses zoned-decimal overpunch signs, so compile with -fsign=EBCDIC.
+      /usr/bin/java is Java 8 on this image; the Spring Boot module requires Java 21 (JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64).
